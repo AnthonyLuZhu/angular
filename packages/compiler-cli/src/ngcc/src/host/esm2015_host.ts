@@ -111,10 +111,6 @@ export class Esm2015ReflectionHost implements NgccReflectionHost {
     return getImportOfSymbol(symbol);
   }
 
-  isClass(node: ts.Node): node is ts.Declaration {
-    return ts.isClassDeclaration(node);
-  }
-
   /**
    * Member decorators are declared as static properties of the class in ES2015:
    *
