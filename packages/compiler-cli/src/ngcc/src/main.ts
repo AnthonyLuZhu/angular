@@ -11,11 +11,14 @@
 import {relative, resolve} from 'path';
 import {inspect} from 'util';
 import * as ts from 'typescript';
-import {DecoratedClass, getEntryPoints} from './parser/parser';
-import {Esm2015PackageParser} from './parser/esm2015_parser';
-import {Esm2015ReflectionHost} from './host/esm2015_host';
+
 import {ComponentDecoratorHandler, DirectiveDecoratorHandler, InjectableDecoratorHandler, NgModuleDecoratorHandler, SelectorScopeRegistry} from '../../ngtsc/annotations';
+
 import {AnalyzedClass, Analyzer} from './analyzer';
+import {Esm2015ReflectionHost} from './host/esm2015_host';
+import {Esm2015PackageParser} from './parser/esm2015_parser';
+import {DecoratedClass, getEntryPoints} from './parser/parser';
+import {Renderer} from './renderer';
 
 export function mainNgcc(args: string[]): number {
   const packagePath = resolve(args[0]);
@@ -50,6 +53,14 @@ export function mainNgcc(args: string[]): number {
       .filter(analysis => !!analysis) as AnalyzedClass[];
 
     dumpAnalysis(analyzedClasses);
+
+
+    const renderer = new Renderer();
+    const renderedClasses = renderer.renderDefinitions(analyzedClasses);
+
+    console.log('Conmpiled definitions');
+    console.log(renderedClasses.imports);
+    console.log(renderedClasses.renderedClasses.map(c => c.renderedDefinition));
   });
 
   return 0;
