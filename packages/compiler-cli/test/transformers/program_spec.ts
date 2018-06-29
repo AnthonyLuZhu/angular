@@ -374,7 +374,7 @@ describe('ng program', () => {
     program.loadNgStructureAsync().then(() => {
       program.emit();
       const factory =
-          fs.readFileSync(path.resolve(testSupport.basePath, 'built/src/main.ngfactory.js'));
+          fs.readFileSync(path.resolve(testSupport.basePath, 'built/src/main.ngfactory.js'), 'utf8');
       expect(factory).toContain('Hello world!');
       done();
     });
@@ -678,7 +678,7 @@ describe('ng program', () => {
       program.emit();
 
       const lazyNgFactory =
-          fs.readFileSync(path.resolve(testSupport.basePath, 'built/src/lazy/lazy.ngfactory.js'));
+          fs.readFileSync(path.resolve(testSupport.basePath, 'built/src/lazy/lazy.ngfactory.js'), 'utf8');
       expect(lazyNgFactory).toContain('import * as i1 from "./lazy";');
     });
 

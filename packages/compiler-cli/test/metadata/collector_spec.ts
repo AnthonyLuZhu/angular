@@ -9,7 +9,7 @@
 import * as ts from 'typescript';
 
 import {MetadataCollector} from '../../src/metadata/collector';
-import {ClassMetadata, ConstructorMetadata, METADATA_VERSION, MetadataEntry, ModuleMetadata, isClassMetadata, isMetadataGlobalReferenceExpression} from '../../src/metadata/schema';
+import {ClassMetadata, ConstructorMetadata, MetadataMap, METADATA_VERSION, MetadataEntry, ModuleMetadata, isClassMetadata, isMetadataGlobalReferenceExpression} from '../../src/metadata/schema';
 
 import {Directory, Host, expectValidSources} from './typescript.mocks';
 
@@ -269,13 +269,16 @@ describe('Collector', () => {
   it('should provide any reference for an any ctor parameter type', () => {
     const casesAny = <ClassMetadata>casesMetadata.metadata['CaseAny'];
     expect(casesAny).toBeTruthy();
-    const ctorData = casesAny.members !['__ctor__'];
+    const ctorData = casesAny.members !['__ctor__'] as ConstructorMetadata[];
     expect(ctorData).toEqual(
-        [{__symbolic: 'constructor', parameters: [{__symbolic: 'reference', name: 'any'}]}]);
+        [{
+          __symbolic: 'constructor',
+          parameters: [{__symbolic: 'reference', name: 'any'}]
+        }]);
   });
 
   it('should record annotations on set and get declarations', () => {
-    const propertyData = (line: number) => ({
+    const propertyData = (line: number) => <MetadataMap>({
       name: [{
         __symbolic: 'property',
         decorators: [{
@@ -309,7 +312,7 @@ describe('Collector', () => {
         }
       }],
       members: {
-        __ctor__: [{
+        __ctor__: [<ConstructorMetadata>{
           __symbolic: 'constructor',
           parameters: [{
             __symbolic: 'reference',
@@ -749,7 +752,7 @@ describe('Collector', () => {
     const source = program.getSourceFile('/interface-reference.ts') !;
     const metadata = collector.getMetadata(source) !;
     expect((metadata.metadata['SomeClass'] as ClassMetadata).members).toEqual({
-      __ctor__: [{
+      __ctor__: [<ConstructorMetadata>{
         __symbolic: 'constructor',
         parameterDecorators: [[{
           __symbolic: 'call',
@@ -858,7 +861,7 @@ describe('Collector', () => {
       }
     `);
     expect((metadata.metadata['SomeClass'] as ClassMetadata).members).toEqual({
-      __ctor__: [{
+      __ctor__: [<ConstructorMetadata>{
         __symbolic: 'constructor',
         parameters: [
           {__symbolic: 'reference', module: './foo', name: 'Foo', line: 3, character: 24},

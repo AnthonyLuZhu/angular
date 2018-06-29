@@ -336,7 +336,7 @@ import {dispatchEvent} from '@angular/platform-browser/testing/src/browser_util'
              dispatchEvent(select.nativeElement, 'change');
              fixture.detectChanges();
              tick();
-             expect(comp.selectedCity['name']).toEqual('NYC');
+             expect(comp.selectedCity !['name']).toEqual('NYC');
 
              select.nativeElement.value = '0: null';
              dispatchEvent(select.nativeElement, 'change');
@@ -1225,7 +1225,7 @@ class NgModelSelectForm {
   `
 })
 class NgModelSelectWithNullForm {
-  selectedCity: {[k: string]: string} = {};
+  selectedCity: null|{[k: string]: string} = {};
   cities: any[] = [];
 }
 

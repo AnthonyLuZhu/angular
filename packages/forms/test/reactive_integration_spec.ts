@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {Component, Directive, Input, Type, forwardRef} from '@angular/core';
+import {Component, DebugElement, Directive, Input, Type, forwardRef} from '@angular/core';
 import {ComponentFixture, TestBed, fakeAsync, tick} from '@angular/core/testing';
 import {AbstractControl, AsyncValidator, AsyncValidatorFn, COMPOSITION_BUFFER_MODE, FormArray, FormControl, FormGroup, FormGroupDirective, FormsModule, NG_ASYNC_VALIDATORS, NG_VALIDATORS, ReactiveFormsModule, Validators} from '@angular/forms';
 import {By} from '@angular/platform-browser/src/dom/debug/by';
@@ -207,7 +207,8 @@ import {MyInput, MyInputForm} from './value_accessor_integration_spec';
         fixture.detectChanges();
 
         emailInput = fixture.debugElement.query(By.css('[formControlName="email"]'));
-        expect(emailInput).toBe(null);
+        // The type in the `expect<T> is a hack because although `query()` can return null it is not typed to do so.
+        expect<DebugElement|null>(emailInput).toBe(null);
       });
 
       it('should strip array controls that are not found', () => {
@@ -1393,7 +1394,7 @@ import {MyInput, MyInputForm} from './value_accessor_integration_spec';
           fixture.componentInstance.form = formGroup;
           fixture.detectChanges();
 
-          const values: string[] = [];
+          const values: any[] = [];
           const streams = merge(
               control.valueChanges, control.statusChanges, formGroup.valueChanges,
               formGroup.statusChanges);
@@ -1430,7 +1431,7 @@ import {MyInput, MyInputForm} from './value_accessor_integration_spec';
           fixture.componentInstance.form = formGroup;
           fixture.detectChanges();
 
-          const values: string[] = [];
+          const values: any[] = [];
           const streams = merge(
               control.valueChanges, control.statusChanges, formGroup.valueChanges,
               formGroup.statusChanges);
