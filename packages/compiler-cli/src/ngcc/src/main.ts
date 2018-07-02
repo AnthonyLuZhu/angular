@@ -12,13 +12,10 @@ import {relative, resolve} from 'path';
 import {inspect} from 'util';
 import * as ts from 'typescript';
 
-import {ComponentDecoratorHandler, DirectiveDecoratorHandler, InjectableDecoratorHandler, NgModuleDecoratorHandler, SelectorScopeRegistry} from '../../ngtsc/annotations';
-
-import {AnalyzedClass, Analyzer} from './analyzer';
+import {AnalyzedFile, Analyzer} from './analyzer';
 import {Esm2015ReflectionHost} from './host/esm2015_host';
 import {Esm2015PackageParser} from './parser/esm2015_parser';
-import {DecoratedClass, getEntryPoints} from './parser/parser';
-import {Renderer} from './renderer';
+import {getEntryPoints, ParsedFile} from './parser/parser';
 
 export function mainNgcc(args: string[]): number {
   const packagePath = resolve(args[0]);
@@ -37,38 +34,29 @@ export function mainNgcc(args: string[]): number {
     const reflectionHost = new Esm2015ReflectionHost(typeChecker);
     const parser = new Esm2015PackageParser(packageProgram, reflectionHost);
 
-    const decoratedClasses = parser.getDecoratedExportedClasses(entryPointFile);
-    dumpDecoratedClasses(decoratedClasses);
+    const parsedFiles = parser.parseEntryPoint(entryPointFile);
+    parsedFiles.forEach(parsedFile => {
+      dumpParsedFile(parsedFile);
 
-    const scopeRegistry = new SelectorScopeRegistry(typeChecker, reflectionHost);
-    const handlers = [
-      new ComponentDecoratorHandler(typeChecker, reflectionHost, scopeRegistry),
-      new DirectiveDecoratorHandler(typeChecker, reflectionHost, scopeRegistry),
-      new InjectableDecoratorHandler(reflectionHost),
-      new NgModuleDecoratorHandler(typeChecker, scopeRegistry),
-    ];
-    const analyzer = new Analyzer(handlers);
-    const analyzedClasses = decoratedClasses
-      .map(decoratedClass => analyzer.analyze(decoratedClass))
-      .filter(analysis => !!analysis) as AnalyzedClass[];
+      const analyzer = new Analyzer(typeChecker, reflectionHost);
+      const analyzedFile = analyzer.analyzeFile(parsedFile);
 
-    dumpAnalysis(analyzedClasses);
+      dumpAnalysis(analyzedFile);
 
+      console.log('Conmpiled definitions');
+      console.log(analyzedFile.imports);
+      console.log(analyzedFile.analyzedClasses.map(c => c.renderedDefinition));
 
-    const renderer = new Renderer();
-    const renderedClasses = renderer.renderDefinitions(analyzedClasses);
-
-    console.log('Conmpiled definitions');
-    console.log(renderedClasses.imports);
-    console.log(renderedClasses.renderedClasses.map(c => c.renderedDefinition));
+    });
   });
-
   return 0;
 }
 
-function dumpDecoratedClasses(decoratedClasses: DecoratedClass[]) {
-  console.log('Decorated classes');
-  decoratedClasses.forEach(decoratedClass => {
+function dumpParsedFile(parsedFile: ParsedFile) {
+  console.log('==================================================================');
+  console.log(parsedFile.sourceFile.fileName);
+  console.log('***** Decorated classes: *****');
+  parsedFile.decoratedClasses.forEach(decoratedClass => {
     let output = `- ${decoratedClass.name} `;
     decoratedClass.decorators.forEach(decorator => {
       output += `[${decorator.name}`;
@@ -81,9 +69,11 @@ function dumpDecoratedClasses(decoratedClasses: DecoratedClass[]) {
   });
 }
 
-function dumpAnalysis(analyzedClasses: AnalyzedClass[]) {
-  console.log('Analyzed classes');
-  analyzedClasses.forEach(analyzedClass => {
+function dumpAnalysis(file: AnalyzedFile) {
+  console.log('==================================================================');
+  console.log(file.sourceFile.fileName);
+  console.log('***** Analyzed classes: *****');
+  file.analyzedClasses.forEach(analyzedClass => {
     console.log(`- ${analyzedClass.clazz.name}`);
     console.log(inspect(analyzedClass, false, 1, true).split('\n').map(line => `    ${line}`).join('\n'));
   });
