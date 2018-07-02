@@ -8,6 +8,7 @@
 import * as ts from 'typescript';
 import {WrappedNodeExpr, WritePropExpr} from '@angular/compiler';
 import {ComponentDecoratorHandler, DirectiveDecoratorHandler, InjectableDecoratorHandler, NgModuleDecoratorHandler, SelectorScopeRegistry} from '../../ngtsc/annotations';
+import {Decorator} from '../../ngtsc/host';
 import {CompileResult, DecoratorHandler} from '../../ngtsc/transform';
 import {ImportAlias, ImportManager, translateStatement} from '../../ngtsc/transform/src/translator';
 import {NgccReflectionHost} from './host/ngcc_host';
@@ -26,6 +27,11 @@ export interface AnalyzedFile {
   analyzedClasses: AnalyzedClass[];
   imports: ImportAlias[];
   sourceFile: ts.SourceFile;
+}
+
+export interface MatchingHandler<T> {
+  handler: DecoratorHandler<T>;
+  decorator: Decorator;
 }
 
 export class Analyzer {
@@ -55,18 +61,22 @@ export class Analyzer {
   }
 
   analyzeClass(file: ts.SourceFile, clazz: DecoratedClass, importManager: ImportManager): AnalyzedClass|undefined {
-    const detected = this.handlers
+    const matchingHandlers = this.handlers
       .map(handler => ({ handler, decorator: handler.detect(clazz.decorators) }))
-      .filter(detected => detected.decorator);
+      .filter((matchingHandler): matchingHandler is MatchingHandler<any> => !!matchingHandler.decorator);
 
-    if (detected.length > 0) {
-      if (detected.length > 1) {
+    if (matchingHandlers.length > 0) {
+      if (matchingHandlers.length > 1) {
         throw new Error('TODO.Diagnostic: Class has multiple Angular decorators.');
       }
-      const handler = detected[0].handler;
-      const {analysis, diagnostics} = handler.analyze(clazz.declaration, detected[0].decorator!);
+
+      const handler = matchingHandlers[0].handler;
+      const decorator = matchingHandlers[0].decorator;
+
+      const {analysis, diagnostics} = handler.analyze(clazz.declaration, decorator);
       const compilation = handler.compile(clazz.declaration, analysis);
       const renderedDefinition = this.renderDefinition(file, clazz.name, compilation, importManager);
+
       return { clazz, handler, analysis, diagnostics, compilation, renderedDefinition };
     }
   }

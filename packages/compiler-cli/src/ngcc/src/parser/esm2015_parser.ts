@@ -28,14 +28,14 @@ export class Esm2015PackageParser implements PackageParser {
         .filter(exportSymbol => exportSymbol.flags & ts.SymbolFlags.Class);
 
       const classDeclarations = exportClasses
-        .map(exportSymbol => exportSymbol.valueDeclaration) as ts.Declaration[];
+        .map(exportSymbol => exportSymbol.valueDeclaration as ts.ClassDeclaration);
 
 
       const decoratedClasses = classDeclarations
-        .map((declaration: ts.ClassDeclaration) => {
+        .map(declaration => {
           const decorators = this.host.getDecoratorsOfDeclaration(declaration);
           if (decorators) {
-            return new DecoratedClass(declaration.name!.getText(), declaration, decorators);
+            return new DecoratedClass(declaration.name!.text, declaration, decorators);
           }
         })
         .filter(decoratedClass => decoratedClass) as DecoratedClass[];
