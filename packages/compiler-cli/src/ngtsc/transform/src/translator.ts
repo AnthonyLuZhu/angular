@@ -28,18 +28,23 @@ const BINARY_OPERATORS = new Map<BinaryOperator, ts.BinaryOperator>([
   [BinaryOperator.Plus, ts.SyntaxKind.PlusToken],
 ]);
 
+export interface ImportAlias {
+  name: string;
+  as: string;
+}
+
 export class ImportManager {
   private moduleToIndex = new Map<string, string>();
   private nextIndex = 0;
 
   generateNamedImport(moduleName: string): string {
     if (!this.moduleToIndex.has(moduleName)) {
-      this.moduleToIndex.set(moduleName, `i${this.nextIndex++}`);
+      this.moduleToIndex.set(moduleName, `ɵ${this.nextIndex++}`);
     }
     return this.moduleToIndex.get(moduleName) !;
   }
 
-  getAllImports(): {name: string, as: string}[] {
+  getAllImports(): ImportAlias[] {
     return Array.from(this.moduleToIndex.keys()).map(name => {
       const as = this.moduleToIndex.get(name) !;
       return {name, as};
